@@ -3,8 +3,9 @@
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://lukahere007-covid-dashboard.streamlit.app)
 
-An interactive, real-time dashboard built using **Streamlit** and the [disease.sh API](https://disease.sh), providing up-to-date COVID-19 statistics for any country in the world.
+![Dashboard Screenshot](https://github.com/user-attachments/assets/ea43636a-ce9a-423e-876f-f67e5f5d610a)
 
+An interactive, real-time dashboard built using **Streamlit** and the [disease.sh API](https://disease.sh), providing up-to-date COVID-19 statistics for any country in the world.
 ---
 
 ## 📦 Features
