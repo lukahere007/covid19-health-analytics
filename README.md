@@ -1,36 +1,65 @@
-# covid19-health-analytics
-# 🌍 Real-Time COVID-19 Tracker Dashboard
+# COVID-19 Country Dashboard
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://lukahere007-covid-dashboard.streamlit.app)
+[![CI](https://github.com/lukahere007/covid19-health-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/lukahere007/covid19-health-analytics/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![Dashboard Screenshot](https://github.com/user-attachments/assets/ea43636a-ce9a-423e-876f-f67e5f5d610a)
+A Streamlit dashboard that pulls COVID-19 data for any country from the public [disease.sh](https://disease.sh) API
+and shows cumulative totals plus daily new cases and deaths.
 
-An interactive, real-time dashboard built using **Streamlit** and the [disease.sh API](https://disease.sh), providing up-to-date COVID-19 statistics for any country in the world.
----
+**This is a look back at the pandemic period, not a live tracker.** The daily time series comes from
+Johns Hopkins CSSE, which stopped updating in March 2023, and most countries have since stopped or reduced
+reporting. The app labels every chart with the last date the series actually covers. An earlier version
+called itself "real-time", which was not accurate.
 
-## 📦 Features
+Hosted version: <https://lukahere007-covid-dashboard.streamlit.app> (Streamlit Community Cloud. It may need
+a minute to wake up and may lag behind this repo.)
 
-- 🌐 Global and per-country case statistics
-- 📈 Line chart of daily cases and deaths over the last 60 days
-- 🥧 Pie chart showing distribution of active, recovered, and death cases
-- 🔍 Powered by real-time public data from [disease.sh](https://disease.sh)
-- 📊 Built with Streamlit, Plotly, and Pandas
+## What it shows
 
----
+- **Cumulative totals** (cases, deaths, recoveries) for the selected country, with the API's refresh time.
+  Recoveries show "n/a" where the country no longer reports them, rather than a misleading 0.
+- **Daily new cases and deaths** for a chosen window ending at the last reported date, as bars plus a
+  7-day rolling mean.
 
-## 🚀 Getting Started
+## How it works
 
-### 🔧 Requirements
+| File | Role |
+|---|---|
+| `covid_data.py` | API calls (10 s timeout, HTTP errors and "country not found" become one `DataUnavailable` error), URL-encodes country names, converts the cumulative series to daily counts |
+| `app.py` | Streamlit UI. Responses are cached for an hour with `st.cache_data`. If the API is down, the app shows a message instead of crashing. |
+| `tests/test_app.py` | 7 pytest tests with a mocked API, including a full render of the app with Streamlit's `AppTest` and the API-down path |
 
-- Python 3.7+
-- Streamlit
-- Pandas
-- Plotly
-- Requests
+Fixes compared with the first version:
 
-### 📥 Installation
+- The "last 60 days" line chart plotted **cumulative** totals, labelled as trends. It now shows daily new counts,
+  computed as differences of the cumulative series. Downward revisions are set to zero.
+- "Last 60 days" meant the 60 days before *today*. For a series that ends in 2023, that window has no new data.
+  The window now ends at the last reported date.
+- No timeouts, no error handling and no caching: one slow or failed request crashed the page, and every
+  interaction re-downloaded everything.
+- Country names with spaces (e.g. "South Korea") were not URL-encoded.
+
+## Run it
 
 ```bash
 git clone https://github.com/lukahere007/covid19-health-analytics.git
 cd covid19-health-analytics
-pip install -r requirements.txt
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+
+pytest                 # offline tests, API mocked
+streamlit run app.py   # needs internet access to disease.sh
+```
+
+## Limitations
+
+- The app could not be checked against the live API while this version was prepared (outbound access to
+  disease.sh was blocked). The tests and a headless `streamlit run` passed with the API mocked or unreachable.
+- Reported case counts depend heavily on testing volume and reporting practice, so they are not comparable
+  across countries or over time without adjustment (per-capita rates, excess mortality).
+- disease.sh is a free community API with no uptime guarantee.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
